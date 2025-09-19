@@ -8,7 +8,7 @@ interface Campos {
   nuevoDato: string;
 }
 
-export function transformPOST(form: FormValues): string {
+export async function transformPOST(form: FormValues): Promise<string> {
   const fechaHoy = new Date();
 
   //Defino los campos adicionales
@@ -26,7 +26,7 @@ export function transformPOST(form: FormValues): string {
 
   //No se pueden usar useStates en una función entonces tengo que armar los arrays así:
   // Campos
-  const campos = [
+  const arrCampos = [
     ...form.fields
       .filter((field) => field.campoTabla && field.campoTabla !== "")
       .map((field) => field.campoTabla as string),
@@ -34,13 +34,19 @@ export function transformPOST(form: FormValues): string {
   ];
 
   // Valores
-  const valores = [
-    ...form.fields
+  const arrValores = [
+    ...(await Promise.all(form.fields
       .filter((field) => field.campoTabla && field.campoTabla !== "")
-      .map((field) => comillas(field.dataType, field.value)),
+      .map(async (field) => await comillas(field.type, field.dataType, field.value?.[0]))
+  )),
     ...camposAdicionales.map((c) => c.nuevoDato),
   ];
 
+  const campos = arrCampos.join(", ");
+  const valores = arrValores.join(", ");
+
+  console.log("Los valores son: ",valores);
+  
   const tabla: string = form.table ?? "";
   const query: string = `Insert into ${tabla} (${campos}) values (${valores})`;
 

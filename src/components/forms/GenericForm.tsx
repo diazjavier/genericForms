@@ -8,7 +8,10 @@ import { FormValues, FormData2 } from "@/interfaces/forms";
 import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect, useRef } from "react";
 import SaveConfirm from "@/components/forms/formsElements/SaveConfirm";
-import {generaQuery} from "@/utils/funciones/funcionesGenerales";
+import transformPOST from "@/utils/transformers/transformPOST";
+import transformPUT from "@/utils/transformers/transformPUT";
+import transformGET from "@/utils/transformers/transformGET";
+import transformDELETE from "@/utils/transformers/transformDELETE";
 
 function GenericForm(formTemplate: FormValues) {
   // Referencia al formulario para limpiarlo con submit() despuésS
@@ -37,8 +40,46 @@ function GenericForm(formTemplate: FormValues) {
   //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
   const [open, setOpen] = useState<boolean>(false);
 
+  const [query, setQuery] = useState<string>();
+  useEffect(() => {
+    if (flag) {
+      //Acá tengo que generar la lógica de impacto en la BD !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      console.log("Guardo: ", query);
+      //Reseteo el formulario
+      formRef.current?.submit();
+    }
+  }, [query]);
+
+  const [flag, setFlag] = useState<boolean>();
+  useEffect(() => {
+    if (form.action === "POST" && flag) {
+      (async () => {
+        const laQuery = await transformPOST(form);
+        setQuery(laQuery);
+      })();
+    }
+        if (form.action === "PUT" && flag) {
+      (async () => {
+        const laQuery = await transformPUT(form);
+        setQuery(laQuery);
+      })();
+    }
+        if (form.action === "GET" && flag) {
+      (async () => {
+        const laQuery = await transformGET(form);
+        setQuery(laQuery);
+      })();
+    }
+        if (form.action === "DELETE" && flag) {
+      (async () => {
+        const laQuery = await transformDELETE(form);
+        setQuery(laQuery);
+      })();
+    }
+  }, [flag]);
+
   //Captura cambios en los controles hijos
-  const handleChange = async (
+  const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
@@ -58,20 +99,9 @@ function GenericForm(formTemplate: FormValues) {
     setOpen(true); //Abre la ventana emergente de confirmación
   };
 
-  const impactaDatos = () => {
-    // console.log(
-    //   "La data del submit es: ",
-    //   JSON.parse(JSON.stringify(form, null, 4))
-    // );
-
-    //Construimos el query
-    const query = generaQuery(form);
-    
-    //Ejecutamos la acción que corresponda sobre la BD
-    console.log(query);
-
-    //Reseteo el formulario
-    formRef.current?.submit();
+  const impactaDatos = async () => {
+    //Tengo que hacerlo así por el lío de los async/await que genera bcrypt al ancriptar la contraseña
+    setFlag(!flag);
   };
 
   return (

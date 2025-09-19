@@ -9,66 +9,42 @@ interface Campos {
 }
 
 export function transformDELETE(form: FormValues): string {
-  const fechaHoy = new Date();
-  const [campos, setCampos] = useState<(string | undefined)[]>([]);
-  const [valores, setValores] = useState<(string | undefined)[]>([]);
+  // const fechaHoy = new Date();
 
-  //Defino los campos adicionales
-  const camposAdicionales: Campos[] = [
-    {
-      nuevoCampo: "fechaCreacion",
-      nuevoDato: "'" + format(fechaHoy.toISOString(), "dd/MM/yyyy") + "'",
-    },
-    {
-      nuevoCampo: "fechaUltimaModificacion",
-      nuevoDato: "'" + format(fechaHoy.toISOString(), "dd/MM/yyyy") + "'",
-    },
-    { nuevoCampo: "usuarioUltimaModificacion", nuevoDato: "1" },
-  ];
+  // //Defino los campos adicionales
+  // const camposAdicionales: Campos[] = [
+  //   {
+  //     nuevoCampo: "fechaCreacion",
+  //     nuevoDato: "'" + format(fechaHoy.toISOString(), "dd/MM/yyyy") + "'",
+  //   },
+  //   {
+  //     nuevoCampo: "fechaUltimaModificacion",
+  //     nuevoDato: "'" + format(fechaHoy.toISOString(), "dd/MM/yyyy") + "'",
+  //   },
+  //   { nuevoCampo: "usuarioUltimaModificacion", nuevoDato: "1" },
+  // ];
+  // //No se pueden usar useStates en una función entonces tengo que armar los arrays así:
+  // // Campos
+  // const campos = [
+  //   ...form.fields
+  //     .filter((field) => field.campoTabla && field.campoTabla !== "")
+  //     .map((field) => field.campoTabla as string),
+  //   ...camposAdicionales.map((c) => c.nuevoCampo),
+  // ];
 
-  function cargaCampos(camposAdicionales: Campos[]) {
-    //Primero agrego los campos definidos
-    const losCampos = form.fields.map((field) => {
-      //Si no está definido el nombre del campo en form.fields no lo agrego el campo
-      if (field.campoTabla && field.campoTabla !== "") {
-        return field.campoTabla;
-      }
-    });
-    setCampos(losCampos);
-
-    //Ahora agrego los campos ocultos
-    camposAdicionales.map((cadd) => {
-      setCampos([...campos, cadd.nuevoDato]);
-    });
-  }
-
-  function cargaValores(camposAdicionales: Campos[]) {
-    //Primero agrego los campos definidos
-    const losValores = form.fields.map((field) => {
-      //Si no está definido el nombre del campo en form.fields no agrego el valor
-      if (field.campoTabla && field.campoTabla !== "") {
-        return comillas(field.dataType, field.value);
-      }
-    });
-    setValores(losValores);
-
-    //Ahora agrego los campos ocultos
-    camposAdicionales.map((cadd) => {
-      setValores([...valores, cadd.nuevoCampo]);
-    });
-  }
-
-  //Iicio los campos con este userEffect
-  useEffect(() => {
-    cargaCampos(camposAdicionales);
-    cargaValores(camposAdicionales);
-  }, []);
-
-  const tabla: string = form.table ?? "";
-  const query: string = `Delete into ${tabla} (${campos}) values (${valores})`;
+  // // Valores
+  // const valores = [
+  //   ...form.fields
+  //     .filter((field) => field.campoTabla && field.campoTabla !== "")
+  //     .map((field) => comillas(field.type, field.dataType, field.value)),
+  //   ...camposAdicionales.map((c) => c.nuevoDato),
+  // ];
+  // const tabla: string = form.table ?? "";
+  // const query: string = `Delete into ${tabla} (${campos}) values (${valores})`;
   
-  return query;
+  // return query;
 
+     return "";
 }
 
 export default transformDELETE;

@@ -29,7 +29,7 @@ function FormDatePicker({ field, dataChange }: FormInputProps) {
 
     //Mando la nueva fecha al set de datos del formulario
     // Simula un evento para mantener la lógica centralizada
-    const laData: string[] = date ? [date.toISOString()] : [];
+    const laData: string[] = date ? [date.toISOString() + "T00:00:00"] : [];
     const fakeEvent = {
       target: { type: "select", name: field.name, value: laData },
     };

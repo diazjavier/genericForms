@@ -1,7 +1,7 @@
 
 type ButtonColor = undefined | "gray" | "gold" | "gray" | "gold" | "bronze" | "brown" | "yellow" | "amber" | "orange" | "tomato" | "red" | "ruby" | "crimson" | "pink" | "plum" | "purple" | "violet" | "iris" | "indigo" | "blue" | "cyan" | "teal" | "jade" | "green" | "grass" | "lime" | "mint" | "sky";
 type FieldType = undefined | "input" | "select" | "textarea" | "checkbox" | "radio" | "datepicker";
-type TextType = undefined | "text" | "email" | "password" | "number";
+export type TextType = undefined | "text" | "email" | "password" | "number";
 type TextSubType = undefined | "text" | "user" | "email" | "password";
 type ButtonType = undefined | "button" | "submit" | "reset";
 type FormActions = "GET" | "PUT" | "POST" | "DELETE";
