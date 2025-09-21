@@ -5,7 +5,7 @@ export type TextType = undefined | "text" | "email" | "password" | "number";
 type TextSubType = undefined | "text" | "user" | "email" | "password";
 type ButtonType = undefined | "button" | "submit" | "reset";
 type FormActions = "GET" | "PUT" | "POST" | "DELETE";
-type DataType = "integer" | "float" | "varchar" | "date" | "datetime" | "boolean" | "text";
+export type DataType = "integer" | "float" | "varchar" | "date" | "datetime" | "boolean" | "text";
 
 
 export interface FormValues {
@@ -33,6 +33,7 @@ export interface Field {
   value?: string[] | undefined;
   campoTabla?: string;
   dataType: DataType;
+  unique?: boolean;
 };
 
 export interface FormButton {  

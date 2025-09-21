@@ -1,0 +1,25 @@
+export const messages = {
+  error: {
+    userNotFound: "Usuario no encontrado",
+    invalidPassword: "Contraseña inválida",
+    userExists: "El usuario ya existe",
+    loginSuccess: "Inicio de sesión exitoso",
+    serverError: "Error del servidor, por favor intente más tarde",
+    usernameRequired: "El nombre de usuario es obligatorio",
+    emailRequired: "El correo electrónico es obligatorio",
+    passwordRequired: "La contraseña es obligatoria",   
+    confirmPasswordRequired: "La confirmación de la contraseña es obligatoria",
+    invalidEmail: "Formato de correo electrónico inválido",
+    passwordMatch: "Las contraseñas no coinciden", 
+    userDeactivated: "El usuario está inactivo. Por favor póngase en contacto con el administrador",
+    tokenRequired: "Operación no autorizada. Token incorrecto, caducado o ausente",
+  },
+  success: {
+    userCreated: "Usuario creado exitosamente",
+    registrationSuccess: "Registro exitoso",
+    loggedIn: "Usuario ha iniciado sesión exitosamente",
+    mailSended: "Correo de restablecimiento de contraseña enviado exitosamente",
+    passwordChanged: "Contraseña cambiada exitosamente",
+    authorized: "Usuario autorizado",
+  },
+};

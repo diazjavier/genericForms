@@ -18,6 +18,7 @@
             value: [""],
             dataType: "varchar",
             campoTabla: "usuario",
+            unique: true,
         },
         {
             fieldType: "input",
