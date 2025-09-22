@@ -60,4 +60,9 @@ export interface FormInputProps {
   //setDatos: React.Dispatch<React.SetStateAction<FormData2[]>>;
 }
 
+export interface DataValidation {
+  validation: boolean;
+  message: string;
+}
+
 //export type FormData = {[x: string]: string | undefined};

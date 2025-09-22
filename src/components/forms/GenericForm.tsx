@@ -3,7 +3,7 @@ import { Card, Heading, Flex, ScrollArea } from "@radix-ui/themes";
 
 import FormFields from "@/components/forms/formsElements/FormFields";
 import FormButtonComponent from "@/components/forms/formsElements/FormButton";
-import { FormValues } from "@/interfaces/forms";
+import { DataValidation, FormValues } from "@/interfaces/forms";
 
 import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect, useRef } from "react";
@@ -12,6 +12,7 @@ import transformPOST from "@/utils/transformers/transformPOST";
 import transformPUT from "@/utils/transformers/transformPUT";
 import transformGET from "@/utils/transformers/transformGET";
 import transformDELETE from "@/utils/transformers/transformDELETE";
+import { validaDatos } from "@/utils/funciones/funcionesGenerales";
 
 function GenericForm(formTemplate: FormValues) {
   // Referencia al formulario para limpiarlo con submit() despuésS
@@ -39,29 +40,23 @@ function GenericForm(formTemplate: FormValues) {
 
   // Función async para guardar los datos:
   const fetchGenericPOST = async () => {
-
-    const apiUrl: string =  `http://${process.env.NEXT_PUBLIC_HOST}:${process.env.NEXT_PUBLIC_PORT}/api/generic/post`;
-    const request = new Request(
-      apiUrl,
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query, form }),
-        // body: JSON.stringify({ query }),
-      }
-    );
+    const apiUrl: string = `http://${process.env.NEXT_PUBLIC_HOST}:${process.env.NEXT_PUBLIC_PORT}/api/generic/post`;
+    const request = new Request(apiUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query, form }),
+      // body: JSON.stringify({ query }),
+    });
 
     const res = await fetch(request);
 
-
-        if (!res.ok) {
+    if (!res.ok) {
       throw new Error(`Error en la API: ${res.status} - ${await res.text()}`);
     }
 
     const response = await res.json();
-    console.log("la response es: ",response)
+    console.log("la response es: ", response);
     return response;
-
   };
 
   //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
@@ -74,9 +69,9 @@ function GenericForm(formTemplate: FormValues) {
       console.log("Guardo: ", query);
 
       (async () => {
-      const res = await fetchGenericPOST();
-      console.log("La respuesta final es: ",res);
-      })()
+        const res = await fetchGenericPOST();
+        console.log("La respuesta final es: ", res);
+      })();
 
       //Reseteo el formulario
       formRef.current?.submit();
@@ -133,8 +128,14 @@ function GenericForm(formTemplate: FormValues) {
   };
 
   const impactaDatos = async () => {
-    //Tengo que hacerlo así por el lío de los async/await que genera bcrypt al ancriptar la contraseña
-    setFlag(!flag);
+    const datosValidados: DataValidation[] = await validaDatos(form);
+    //console.log("Valida datos: ", datosValidados);
+    if (datosValidados[0].validation) {
+      //Tengo que hacerlo así por el lío de los async/await que genera bcrypt al ancriptar la contraseña
+      setFlag(!flag);
+    } else {
+      console.log(datosValidados[0].message);
+    }
   };
 
   return (

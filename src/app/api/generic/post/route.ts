@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { conn } from "@/utils/dbConnection";
 import { messages } from "@/utils/messages";
- import { isValidEmail } from "@/utils/isValidEmail";
+ //import { isValidEmail } from "@/utils/isValidEmail";
  import { Field, FormValues } from "@/interfaces/forms";
 
 export async function POST(request: NextRequest) {
@@ -9,58 +9,59 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     //console.log("El body es: ", JSON.stringify(body, null, 2));
 
-    const { query, form } = body;
+     const { query, form } = body;
 
-    //Valido los campos
-    const validations = form.fields.map(async (field: Field) => {
-      // 1- Valido los campos obligatorios
-      if (
-        field.required &&
-        (!field.value ||
-          field.value?.length === 0 ||
-          field.value.some((str) => str === ""))
-      ) {
-        return new NextResponse(
-          JSON.stringify({
-            message: `El campo ${field.campoTabla} es obligatorio`,
-          }),
-          { status: 400 }
-        );
-      }
 
-      // 2- Valido el formato cuando es un email
-      if (
-        field.subType === "email" &&
-        field.value &&
-        field.value[0] !== "" &&
-        !isValidEmail(field.value?.[0])
-      ) {
-        console.log("Etró a validar el mail");
-        return new NextResponse(
-            JSON.stringify({ message: messages.error.invalidEmail }),
-            { status: 400 }
-        );
-    }
+    // //Valido los campos
+    // const validations = form.fields.map(async (field: Field) => {
+    //   // 1- Valido los campos obligatorios
+    //   if (
+    //     field.required &&
+    //     (!field.value ||
+    //       field.value?.length === 0 ||
+    //       field.value.some((str) => str === ""))
+    //   ) {
+    //     return new NextResponse(
+    //       JSON.stringify({
+    //         message: `El campo ${field.campoTabla} es obligatorio`,
+    //       }),
+    //       { status: 400 }
+    //     );
+    //   }
+
+    //   // 2- Valido el formato cuando es un email
+    //   if (
+    //     field.subType === "email" &&
+    //     field.value &&
+    //     field.value[0] !== "" &&
+    //     !isValidEmail(field.value?.[0])
+    //   ) {
+    //     console.log("Etró a validar el mail");
+    //     return new NextResponse(
+    //         JSON.stringify({ message: messages.error.invalidEmail }),
+    //         { status: 400 }
+    //     );
+    // }
     
-    // 3- Valido si existe el dato en la tabla cuando es un campo unique (como por Ej: el nombre de usuario)
-    if (field.unique) {
+    // // 3- Valido si existe el dato en la tabla cuando es un campo unique (como por Ej: el nombre de usuario)
+    // if (field.unique) {
         
-        const validationQuery: string = `SELECT * FROM "${form.table}" WHERE "${field.campoTabla}" = ${"'"+field.value?.[0]+"'"};`;
-        const existingData: any = await conn.query(validationQuery);
+    //     const validationQuery: string = `SELECT * FROM "${form.table}" WHERE "${field.campoTabla}" = ${"'"+field.value?.[0]+"'"};`;
+    //     const existingData: any = await conn.query(validationQuery);
         
-        if (existingData.rowCount > 0) {
-            console.log("Entró y Las filas devueltas son: ", existingData.rowCount);
-          return new NextResponse(
-            JSON.stringify({
-              message: `${field.value?.[0]} ya existe en el campo ${field.label} `,
-            }),
-            { status: 400 }
-          );
-        }
-      }
-    });
+    //     if (existingData.rowCount > 0) {
+    //         console.log("Entró y Las filas devueltas son: ", existingData.rowCount);
+    //       return new NextResponse(
+    //         JSON.stringify({
+    //           message: `${field.value?.[0]} ya existe en el campo ${field.label} `,
+    //         }),
+    //         { status: 400 }
+    //       );
+    //     }
+    //   }
+    // });
 
-    console.log("Las validaciones son: ", validations);
+    // console.log("Las validaciones son: ", validations);
 
     // Si pasa todas las validaciones guardo y genero el objeto a devolver
     await conn.query(query);
