@@ -3,7 +3,7 @@ import { Card, Heading, Flex, ScrollArea } from "@radix-ui/themes";
 
 import FormFields from "@/components/forms/formsElements/FormFields";
 import FormButtonComponent from "@/components/forms/formsElements/FormButton";
-import { FormValues, FormData2 } from "@/interfaces/forms";
+import { FormValues } from "@/interfaces/forms";
 
 import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect, useRef } from "react";
@@ -37,6 +37,33 @@ function GenericForm(formTemplate: FormValues) {
   //   console.log("Campos nuevos: ", form.fields);
   // }, [form]);
 
+  // Función async para guardar los datos:
+  const fetchGenericPOST = async () => {
+
+    const apiUrl: string =  `http://${process.env.NEXT_PUBLIC_HOST}:${process.env.NEXT_PUBLIC_PORT}/api/generic/post`;
+    const request = new Request(
+      apiUrl,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query, form }),
+        // body: JSON.stringify({ query }),
+      }
+    );
+
+    const res = await fetch(request);
+
+
+        if (!res.ok) {
+      throw new Error(`Error en la API: ${res.status} - ${await res.text()}`);
+    }
+
+    const response = await res.json();
+    console.log("la response es: ",response)
+    return response;
+
+  };
+
   //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
   const [open, setOpen] = useState<boolean>(false);
 
@@ -45,6 +72,12 @@ function GenericForm(formTemplate: FormValues) {
     if (flag) {
       //Acá tengo que generar la lógica de impacto en la BD !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       console.log("Guardo: ", query);
+
+      (async () => {
+      const res = await fetchGenericPOST();
+      console.log("La respuesta final es: ",res);
+      })()
+
       //Reseteo el formulario
       formRef.current?.submit();
     }
@@ -58,19 +91,19 @@ function GenericForm(formTemplate: FormValues) {
         setQuery(laQuery);
       })();
     }
-        if (form.action === "PUT" && flag) {
+    if (form.action === "PUT" && flag) {
       (async () => {
         const laQuery = await transformPUT(form);
         setQuery(laQuery);
       })();
     }
-        if (form.action === "GET" && flag) {
+    if (form.action === "GET" && flag) {
       (async () => {
         const laQuery = await transformGET(form);
         setQuery(laQuery);
       })();
     }
-        if (form.action === "DELETE" && flag) {
+    if (form.action === "DELETE" && flag) {
       (async () => {
         const laQuery = await transformDELETE(form);
         setQuery(laQuery);

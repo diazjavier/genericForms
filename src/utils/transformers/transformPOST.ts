@@ -13,22 +13,23 @@ export async function transformPOST(form: FormValues): Promise<string> {
   //Defino los campos adicionales
   const camposAdicionales: Campos[] = [
     {
-      nuevoCampo: "fechaCreacion",
-      nuevoDato: "'" + format(fechaHoy.toISOString(), "dd/MM/yyyy") + "'",
+      nuevoCampo: `"fechaCreacion"`,
+      nuevoDato: "'" + format(fechaHoy.toISOString(), "yyyy-MM-dd") + "'",
     },
     {
-      nuevoCampo: "fechaUltimaModificacion",
-      nuevoDato: "'" + format(fechaHoy.toISOString(), "dd/MM/yyyy") + "'",
+      nuevoCampo: `"fechaUltimaModificacion"`,
+      nuevoDato: "'" + format(fechaHoy.toISOString(), "yyyy-MM-dd") + "'",
     },
-    { nuevoCampo: "usuarioUltimaModificacion", nuevoDato: "1" },
+    { nuevoCampo: `"usuarioUltimaModificacion"`, nuevoDato: "1" },
   ];
 
   //No se pueden usar useStates en una función entonces tengo que armar los arrays así:
   // Campos
+  // Para el query en Postgres necesito ponerle comillas dobles a los nombres de los campos y al nombre de la tabla
   const arrCampos = [
     ...form.fields
       .filter((field) => field.campoTabla && field.campoTabla !== "")
-      .map((field) => field.campoTabla as string),
+      .map((field) => `"${field.campoTabla}"`),
     ...camposAdicionales.map((c) => c.nuevoCampo),
   ];
 
@@ -41,13 +42,12 @@ export async function transformPOST(form: FormValues): Promise<string> {
     ...camposAdicionales.map((c) => c.nuevoDato),
   ];
 
+  //Armo un solo string concatenando todos los elementos del array con una coma (", ")
   const campos = arrCampos.join(", ");
   const valores = arrValores.join(", ");
-
-  console.log("Los valores son: ",valores);
   
   const tabla: string = form.table ?? "";
-  const query: string = `Insert into ${tabla} (${campos}) values (${valores})`;
+  const query: string = `Insert into "${tabla}" (${campos}) values (${valores})`;
 
   return query;
 }

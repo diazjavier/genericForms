@@ -4,7 +4,7 @@ export const messages = {
     invalidPassword: "Contraseña inválida",
     userExists: "El usuario ya existe",
     loginSuccess: "Inicio de sesión exitoso",
-    serverError: "Error del servidor, por favor intente más tarde",
+    serverError: "Error del servidor, por favor intente más tarde o comuníquese con el administrador del sistema",
     usernameRequired: "El nombre de usuario es obligatorio",
     emailRequired: "El correo electrónico es obligatorio",
     passwordRequired: "La contraseña es obligatoria",   
