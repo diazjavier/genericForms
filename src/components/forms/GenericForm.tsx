@@ -62,24 +62,30 @@ function GenericForm(formTemplate: FormValues) {
     return response;
   };
 
-    const fetchGenericPUT = async () => {return ""}
-    const fetchGenericGET = async () => {return ""}
-    const fetchGenericDELETE = async () => {return ""}
+  const fetchGenericPUT = async () => {
+    return "";
+  };
+  const fetchGenericGET = async () => {
+    return "";
+  };
+  const fetchGenericDELETE = async () => {
+    return "";
+  };
 
   //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
   const [open, setOpen] = useState<boolean>(false);
   const [query, setQuery] = useState<string>();
 
   useEffect(() => {
-    console.log("Flag del useeffect[query]: ", flag);
-
     if (flag !== undefined) {
       (async () => {
         switch (form.action) {
           case "POST":
             await fetchGenericPOST();
           case "PUT":
-            await fetchGenericPUT();
+            console.log("Va para el fetchGenericPUT")
+            // await fetchGenericPUT();
+            await fetchGenericPOST();
           case "GET":
             await fetchGenericGET();
           case "DELETE":
@@ -97,16 +103,19 @@ function GenericForm(formTemplate: FormValues) {
   const [flag, setFlag] = useState<boolean>();
 
   useEffect(() => {
-    console.log("Flag del useeffect[flag]: ", flag);
+    console.log("La acción en el useEffect: ", form.action)
+    console.log("El flag es : ", flag)
+
     if (flag !== undefined) {
       if (form.action === "POST") {
-        console.log("Entró al POST");
+        console.log("Entró al PosT");
         (async () => {
           const laQuery = await transformPOST(form);
           setQuery(laQuery);
         })();
       }
       if (form.action === "PUT") {
+        console.log("Entró al PUT");
         (async () => {
           const laQuery = await transformPUT(form);
           setQuery(laQuery);

@@ -3,12 +3,10 @@ import { conn } from "@/utils/dbConnection";
 import { messages } from "@/utils/messages";
 import { FormValues } from "@/interfaces/forms";
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     const { query, form } = body;
-
-    console.log("La query de la API: ", query)
 
     // Guardo y genero el objeto a devolver
     await conn.query(query);
