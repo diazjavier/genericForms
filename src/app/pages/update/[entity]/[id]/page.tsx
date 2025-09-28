@@ -18,8 +18,7 @@ function UpdateEntity({
 
   useEffect(() => {
     (async () => {
-      const result = await buscaEditForm(entity, id); // async
-      console.log("El result de la page: ", result)
+      const result = await buscaEditForm(entity, id); 
       setForm(result);
     })();
   }, []);

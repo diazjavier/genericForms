@@ -99,7 +99,6 @@ export async function validaDatos(form: FormValues): Promise<DataValidation[]> {
           }
 
         })();
-        console.log("validationQuery: ",validationQuery)
 
         if(validationQuery){
 
@@ -124,8 +123,6 @@ export async function validaDatos(form: FormValues): Promise<DataValidation[]> {
   );
 
   const result = await Promise.all(validations);
-  //console.log("Las validaciones son: ", result);
-  //   return validations ?? [{ validation: true, message: "Validación exitosa" }];
   return result.filter((r): r is DataValidation => r !== undefined);
 }
 
@@ -184,7 +181,6 @@ export async function buscaEditForm(
 
   const res = await fetch(request);
   const jsonRes = await res.json();
-  console.log("El usuario de jsonRes: ", jsonRes[0].usuario);
 
   //Armo una nueva estructura de tipo FormValues con los datos que trajo de la tabla
   const newFormValues: FormValues = {

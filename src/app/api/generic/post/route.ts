@@ -8,8 +8,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { query, form } = body;
 
-    console.log("La query de la API: ", query)
-
     // Guardo y genero el objeto a devolver
     await conn.query(query);
 
@@ -24,14 +22,10 @@ export async function POST(request: NextRequest) {
     // Saco las passwords del objeto form para pasárselo a la response
     const newRegister: FormValues = removePassword(form);
 
-    //console.log("El result del Query: ", JSON.stringify(newRegister));
-
     const payload = {
       newRow: newRegister,
       message: messages.success.userCreated,
     };
-
-   // console.log("La response en la API es: ", JSON.stringify(payload));
 
     const response = new NextResponse(JSON.stringify(payload), { status: 201 });
 

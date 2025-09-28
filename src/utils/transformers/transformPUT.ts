@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import { FormValues } from "@/interfaces/forms";
 import { comillas } from "@/utils/funciones/funcionesGenerales";
-import { useState, useEffect } from "react";
 
 interface Campos {
   nuevoCampo: string;
@@ -13,10 +12,6 @@ export async function transformPUT(form: FormValues): Promise<string> {
 
   //Defino los campos adicionales
   const camposAdicionales: Campos[] = [
-    // {
-    //   nuevoCampo: "fechaCreacion",
-    //   nuevoDato: "'" + format(fechaHoy.toISOString(), "dd/MM/yyyy") + "'",
-    // },
     {
       nuevoCampo: "fechaUltimaModificacion",
       nuevoDato: "'" + format(fechaHoy.toISOString(), "yyyy-MM-dd") + "'",
@@ -24,28 +19,27 @@ export async function transformPUT(form: FormValues): Promise<string> {
     { nuevoCampo: "usuarioUltimaModificacion", nuevoDato: "1" },
   ];
 
-  //No se pueden usar useStates en una función entonces tengo que armar los arrays así: 
-    const arrActualizaciones = 
-      form.fields
-        .filter((field) => field.campoTabla && field.campoTabla !== "")
-        .map(async (field) => {
-            const val = await comillas(field.type, field.dataType, field.value?.[0]);
-            return `"${field.campoTabla}" = ${val}`;
-        });
+  //No se pueden usar useStates en una función entonces tengo que armar los arrays así:
+  const arrActualizaciones = form.fields
+    .filter((field) => field.campoTabla && field.campoTabla !== "")
+    .map(async (field) => {
+      const val = await comillas(field.type, field.dataType, field.value?.[0]);
+      return `"${field.campoTabla}" = ${val}`;
+    });
 
-    const adicionales = camposAdicionales.map((c) => `"${c.nuevoCampo}" = ${c.nuevoDato}`);
-    const arrActualizacionesResuletas = await Promise.all(arrActualizaciones);
-    const allActualizaciones = [...arrActualizacionesResuletas, ...adicionales];    
-    const actualizaciones = allActualizaciones.join(", ");
-    console.log("allActualizaciones: ",actualizaciones);
-    
-    const tabla: string = form.table ?? "";
-    const id: string = form.id?.toString() ?? "";
+  const adicionales = camposAdicionales.map(
+    (c) => `"${c.nuevoCampo}" = ${c.nuevoDato}`
+  );
+  const arrActualizacionesResuletas = await Promise.all(arrActualizaciones);
+  const allActualizaciones = [...arrActualizacionesResuletas, ...adicionales];
+  const actualizaciones = allActualizaciones.join(", ");
+
+  const tabla: string = form.table ?? "";
+  const id: string = form.id?.toString() ?? "";
   const query: string = `Update "${tabla}" set ${actualizaciones} where id = ${id};`;
   //const query: string = `Update "Usuarios" set "usuario"='desdeAPI', "email"='desdeAPI@APImail.com' where id = 2`;
 
   return query;
-
 }
 
 export default transformPUT;

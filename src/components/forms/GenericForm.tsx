@@ -83,7 +83,6 @@ function GenericForm(formTemplate: FormValues) {
           case "POST":
             await fetchGenericPOST();
           case "PUT":
-            console.log("Va para el fetchGenericPUT con la query: ", query)
             // await fetchGenericPUT();
             await fetchGenericPOST();
           case "GET":
@@ -103,19 +102,14 @@ function GenericForm(formTemplate: FormValues) {
   const [flag, setFlag] = useState<boolean>();
 
   useEffect(() => {
-    console.log("La acción en el useEffect: ", form.action)
-    console.log("El flag es : ", flag)
-
     if (flag !== undefined) {
       if (form.action === "POST") {
-        console.log("Entró al PosT");
         (async () => {
           const laQuery = await transformPOST(form);
           setQuery(laQuery);
         })();
       }
       if (form.action === "PUT") {
-        console.log("Entró al PUT");
         (async () => {
           const laQuery = await transformPUT(form);
           setQuery(laQuery);

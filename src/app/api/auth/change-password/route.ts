@@ -88,7 +88,6 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.log(error);
     return new NextResponse(
       JSON.stringify({ message: messages.error.serverError, error }),
       { status: 500 }
