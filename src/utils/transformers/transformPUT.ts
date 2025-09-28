@@ -8,8 +8,7 @@ interface Campos {
   nuevoDato: string;
 }
 
-export function transformPUT(form: FormValues): string {
-    console.log("Entró a transformPUT")
+export async function transformPUT(form: FormValues): Promise<string> {
   const fechaHoy = new Date();
 
   //Defino los campos adicionales
@@ -20,35 +19,30 @@ export function transformPUT(form: FormValues): string {
     // },
     {
       nuevoCampo: "fechaUltimaModificacion",
-      nuevoDato: "'" + format(fechaHoy.toISOString(), "dd/MM/yyyy") + "'",
+      nuevoDato: "'" + format(fechaHoy.toISOString(), "yyyy-MM-dd") + "'",
     },
     { nuevoCampo: "usuarioUltimaModificacion", nuevoDato: "1" },
   ];
 
-  //No se pueden usar useStates en una función entonces tengo que armar los arrays así:
-  // Campos
-  const campos = [
-    ...form.fields
-      .filter((field) => field.campoTabla && field.campoTabla !== "")
-      .map((field) => field.campoTabla as string),
-    ...camposAdicionales.map((c) => c.nuevoCampo),
-  ];
+  //No se pueden usar useStates en una función entonces tengo que armar los arrays así: 
+    const arrActualizaciones = 
+      form.fields
+        .filter((field) => field.campoTabla && field.campoTabla !== "")
+        .map(async (field) => {
+            const val = await comillas(field.type, field.dataType, field.value?.[0]);
+            return `"${field.campoTabla}" = ${val}`;
+        });
 
-  // Valores
-  const valores = [
-    ...form.fields
-      .filter((field) => field.campoTabla && field.campoTabla !== "")
-      .map((field) => comillas(field.type, field.dataType, field.value?.[0])),
-    ...camposAdicionales.map((c) => c.nuevoDato),
-  ];
-
-
-
-
-  const tabla: string = form.table ?? "";
-  const id: string = form.id?.toString() ?? "";
-  const query: string = `Update ${tabla} set (${campos}) values (${valores}) where id = ${id}`;
-  const query: string = `Update "Usuarios" set "usuario"="desdeAPI", "email"="desdeAPI@APImail.com" where id = 2`;
+    const adicionales = camposAdicionales.map((c) => `"${c.nuevoCampo}" = ${c.nuevoDato}`);
+    const arrActualizacionesResuletas = await Promise.all(arrActualizaciones);
+    const allActualizaciones = [...arrActualizacionesResuletas, ...adicionales];    
+    const actualizaciones = allActualizaciones.join(", ");
+    console.log("allActualizaciones: ",actualizaciones);
+    
+    const tabla: string = form.table ?? "";
+    const id: string = form.id?.toString() ?? "";
+  const query: string = `Update "${tabla}" set ${actualizaciones} where id = ${id};`;
+  //const query: string = `Update "Usuarios" set "usuario"='desdeAPI', "email"='desdeAPI@APImail.com' where id = 2`;
 
   return query;
 

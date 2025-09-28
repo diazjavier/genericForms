@@ -83,7 +83,7 @@ function GenericForm(formTemplate: FormValues) {
           case "POST":
             await fetchGenericPOST();
           case "PUT":
-            console.log("Va para el fetchGenericPUT")
+            console.log("Va para el fetchGenericPUT con la query: ", query)
             // await fetchGenericPUT();
             await fetchGenericPOST();
           case "GET":
