@@ -15,7 +15,7 @@
             placeholder: "Escriba su nombre de usuario...",
             autofocus: true,
             required: true,
-            value: [""],
+            //value: [""],
             dataType: "varchar",
             campoTabla: "usuario",
             unique: true,

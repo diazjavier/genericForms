@@ -23,7 +23,8 @@ export async function transformPUT(form: FormValues): Promise<string> {
   const arrActualizaciones = form.fields
     .filter((field) => field.campoTabla && field.campoTabla !== "")
     .map(async (field) => {
-      const val = await comillas(field.type, field.dataType, field.value?.[0]);
+      const val: string = await comillas(field.type, field.dataType, field.value?.[0]);
+      //Algún día tengo que ver como hacer para que no tome el primer valor siempre
       return `"${field.campoTabla}" = ${val}`;
     });
 

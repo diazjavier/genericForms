@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Container, Text, Link, Flex } from "@radix-ui/themes";
+import { Container, Link, Flex } from "@radix-ui/themes";
 import NavLink from "next/link";
 import GenericForm from "@/components/forms/GenericForm";
 import { FormValues } from "@/interfaces/forms";
@@ -18,7 +18,7 @@ function UpdateEntity({
 
   useEffect(() => {
     (async () => {
-      const result = await buscaEditForm(entity, id); 
+      const result: FormValues | null = await buscaEditForm(entity, id); 
       setForm(result);
     })();
   }, []);

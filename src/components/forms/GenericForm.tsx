@@ -74,6 +74,8 @@ function GenericForm(formTemplate: FormValues) {
 
   //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
   const [open, setOpen] = useState<boolean>(false);
+
+  //Creamos un estado para armar la Query
   const [query, setQuery] = useState<string>();
 
   useEffect(() => {

@@ -23,10 +23,11 @@ export async function isValidEmail(email: string): Promise<boolean> {
 
 //Hashea una password
 export async function hashingPass(pass: string | undefined): Promise<string> {
+  console.log("pass: ", pass);
   if (!pass) {
-    return bcrypt.hash("", 10);
+    return await bcrypt.hash("", 10);
   } else {
-    return bcrypt.hash(pass, 10);
+    return await bcrypt.hash(pass, 10);
   }
 }
 
@@ -36,22 +37,32 @@ export async function comillas(
   dataType: DataType,
   dato: string | undefined
 ): Promise<string> {
+  //   console.log("pass original: ", dato);
+  //   console.log("pass[0][0]: ", dato?.[0][0]);
+
   //Si no hay dato devuelvo NULL
   if (!dato || (dato.length === 1 && dato[0] === "") || dato === undefined) {
+    // console.log("dato NULL: ", "NULL");
     return "NULL";
   }
 
   //Si es numérico o booleano devuelvo el dato SIN comillas
   if (dataType in ["integer", "float", "boolean"]) {
-    return dato[0];
+    // console.log("dato: ", dato);
+    return dato;
   }
   //Si el tipo de campo es password lo encripto antes de guardarlo y le pongo las comillas
   if (fieldType === "password") {
-    const hashedPass = await hashingPass(dato[0]);
+    // console.log("dato: ", dato);
+    const hashedPass = await hashingPass(dato[0][0]);
+    // console.log("dato: ", "'" + hashedPass + "'");
     return "'" + hashedPass + "'";
   }
   //Si es ["varchar" , "date" , "datetime" , "text"] devuelvo el dato con comillas
-  return "'" + dato[0] + "'";
+  //   console.log("dato sin comillas: ", dato);
+  const datoConComillas: string = "'" + dato + "'";
+  //   console.log("dato con comillas: ", datoConComillas);
+  return datoConComillas;
 }
 
 //Valida los datos para un query genérico
@@ -91,26 +102,28 @@ export async function validaDatos(form: FormValues): Promise<DataValidation[]> {
       if (field.unique && field.campoTabla) {
         const validationQuery: string | undefined = (() => {
           if (form.action === "POST") {
-            return `SELECT * FROM "${form.table}" WHERE "${field.campoTabla}" = ${"'" + field.value?.[0] + "'"};`;
+            return `SELECT * FROM "${form.table}" WHERE "${
+              field.campoTabla
+            }" = ${"'" + field.value?.[0] + "'"};`;
           }
 
           if (form.action === "PUT") {
-            return `SELECT * FROM "${form.table}" WHERE "${field.campoTabla}" = ${"'" + field.value?.[0] + "'"} and id != ${form.id};`;
+            return `SELECT * FROM "${form.table}" WHERE "${
+              field.campoTabla
+            }" = ${"'" + field.value?.[0] + "'"} and id != ${form.id};`;
           }
-
         })();
 
-        if(validationQuery){
+        if (validationQuery) {
+          const existingData: any = await conn.query(validationQuery);
 
-            const existingData: any = await conn.query(validationQuery);
-            
-            if (existingData.rowCount > 0) {
-                const resp: DataValidation = {
-                    validation: false,
-                    message: `${field.value?.[0]} ya existe en el campo ${field.label} `,
-                };
-                return resp;
-            }
+          if (existingData.rowCount > 0) {
+            const resp: DataValidation = {
+              validation: false,
+              message: `${field.value?.[0]} ya existe en el campo ${field.label} `,
+            };
+            return resp;
+          }
         }
       }
 
@@ -182,7 +195,15 @@ export async function buscaEditForm(
   const res = await fetch(request);
   const jsonRes = await res.json();
 
+  //Resolver mejor el caso en el queno se encuentran datos
+  if (!jsonRes || jsonRes.length === 0) {
+    console.error(
+      `No se encontraron datos para la entidad: ${entity} con id: ${id}`
+    );
+    return null;
+  }
   //Armo una nueva estructura de tipo FormValues con los datos que trajo de la tabla
+  //Hay que sacar el campo password para que no se vea en el formulario
   const newFormValues: FormValues = {
     ...formModel,
     action: "PUT",
@@ -195,6 +216,71 @@ export async function buscaEditForm(
         : field
     ),
   };
+
+  return newFormValues;
+}
+
+//Para la midificación de registros existentes
+export async function buscaEntityData(
+  entity: string,
+): Promise<FormValues | null> {
+  //Traigo el modelo de form
+  const formModel = await buscaForm(entity);
+
+  if (!formModel) {
+    console.error(`No se encontró un formulario para la entidad: ${entity}`);
+    return null;
+  }
+
+  if (!formModel.fields || formModel.fields.length === 0) {
+    console.error(`El formulario de ${entity} no tiene campos definidos`);
+    return null;
+  }
+
+  //Extraigo los nombres de los campos de la tabla que se incluyen en el modelo
+  const arrCampos = [
+    ...formModel.fields
+      .filter((field) => field.campoTabla && field.campoTabla !== "")
+      .map((field) => `"${field.campoTabla}"`),
+  ];
+
+  const query: string = `Select ${arrCampos} from "${entity}"`;
+
+  //Mando un POST en lugar de un GET porque con un GET no puedo mandar un body
+  const request = new Request(
+    `http://${process.env.NEXT_PUBLIC_HOST}:${process.env.NEXT_PUBLIC_PORT}/api/generic/get`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query }),
+    }
+  );
+
+  const res = await fetch(request);
+  const jsonRes = await res.json();
+  
+  //Resolver mejor el caso en el queno se encuentran datos
+  if (!jsonRes || jsonRes.length === 0) {
+    console.error(
+      `No se encontraron datos para la entidad: ${entity}`
+    );
+    return null;
+  }
+  //Armo una nueva estructura de tipo FormValues con los datos que trajo de la tabla
+  //Hay que sacar el campo password para que no se vea en el formulario
+  const newFormValues: FormValues = {
+    ...formModel,
+    action: "GET",
+    formName: `datosDe${formModel.table}`,
+    formTitle: `${formModel.formTitle}`,
+    fields: formModel.fields.map((field) =>
+      field.campoTabla && arrCampos.includes(`"${field.campoTabla}"`)
+        ? { ...field, value: [jsonRes[0][field.campoTabla]] }
+        : field
+    ),
+  };
+
+  console.log(newFormValues.fields)
 
   return newFormValues;
 }
