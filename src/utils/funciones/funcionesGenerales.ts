@@ -12,6 +12,7 @@ import { messages } from "@/utils/messages";
 import { conn } from "@/utils/dbConnection";
 //import { isValidEmail } from "@/utils/funciones/funcionesGenerales";
 import { formUserRegiter } from "@/utils/forms/formUserRegister";
+import {formUserDataTable} from "@/utils/forms/formUserDataTable";
 import { formMediosDePagoRegiter } from "@/utils/forms/formMediosDePagoRegister";
 import { formTiposDeMovimientosStockRegister } from "@/utils/forms/formTiposDeMovimientosStockRegister";
 
@@ -140,19 +141,39 @@ export async function validaDatos(form: FormValues): Promise<DataValidation[]> {
 }
 
 //Para el alta de nuevos registros
-export async function buscaForm(entity: string): Promise<FormValues | null> {
+export async function buscaForm(entity: string, action: string): Promise<FormValues | null> {
   //   let initialForm: FormValues | null = null;
 
-  switch (entity) {
-    case "Usuarios":
+
+  if(entity === "Usuarios" && ( action === "POST" || action === "PUT")){
       return formUserRegiter;
-    case "MediosDePago":
-      return formMediosDePagoRegiter;
-    case "TiposDeMovimientosStock":
-      return formTiposDeMovimientosStockRegister;
-    default:
-      return null;
   }
+
+  if(entity === "Usuarios" && action === "GET"){
+      return formUserDataTable;
+  }
+
+  if(entity === "MediosDePago" && ( action === "POST" || action === "PUT" || action === "GET")){
+      return formUserDataTable;
+  }
+
+  if(entity === "TiposDeMovimientosStock" && ( action === "POST" || action === "PUT" || action === "GET")){
+      return formUserDataTable;
+  }
+
+  return null;
+
+//   switch (entity) {
+//     case "Usuarios":
+//       return formUserRegiter;
+//     case "MediosDePago":
+//       return formMediosDePagoRegiter;
+//     case "TiposDeMovimientosStock":
+//       return formTiposDeMovimientosStockRegister;
+//     default:
+//       return null;
+//   }
+
 }
 
 //Para la midificación de registros existentes
@@ -161,7 +182,7 @@ export async function buscaEditForm(
   id: string
 ): Promise<FormValues | null> {
   //Traigo el modelo de form
-  const formModel = await buscaForm(entity);
+  const formModel = await buscaForm(entity, "PUT");
 
   if (!formModel) {
     console.error(`No se encontró un formulario para la entidad: ${entity}`);
@@ -223,9 +244,9 @@ export async function buscaEditForm(
 //Para la midificación de registros existentes
 export async function buscaEntityData(
   entity: string,
+  formModel: FormValues
 ): Promise<FormValues | null> {
   //Traigo el modelo de form
-  const formModel = await buscaForm(entity);
 
   if (!formModel) {
     console.error(`No se encontró un formulario para la entidad: ${entity}`);
@@ -284,3 +305,4 @@ export async function buscaEntityData(
 
   return newFormValues;
 }
+

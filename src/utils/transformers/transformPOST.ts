@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { FormValues } from "@/interfaces/forms";
 import { comillas } from "@/utils/funciones/funcionesGenerales";
 
@@ -14,11 +15,11 @@ export async function transformPOST(form: FormValues): Promise<string> {
   const camposAdicionales: Campos[] = [
     {
       nuevoCampo: `"fechaCreacion"`,
-      nuevoDato: "'" + format(fechaHoy.toISOString(), "yyyy-MM-dd") + "'",
+      nuevoDato: "'" + format(fechaHoy, "yyyy-MM-dd'T'00:00:00XXX") + "'",
     },
     {
       nuevoCampo: `"fechaUltimaModificacion"`,
-      nuevoDato: "'" + format(fechaHoy.toISOString(), "yyyy-MM-dd") + "'",
+      nuevoDato: "'" + format(fechaHoy, "yyyy-MM-dd'T'00:00:00XXX") + "'",
     },
     { nuevoCampo: `"usuarioUltimaModificacion"`, nuevoDato: "1" },
   ];

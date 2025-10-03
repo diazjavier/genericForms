@@ -14,7 +14,7 @@ function NewEntity({ params }: { params: Promise<{ entity: string }> }) {
 
   useEffect(() => {
     (async () => {
-      const result = await buscaForm(entity); // async
+      const result = await buscaForm(entity, "POST"); // async
       setForm(result);
     })();
   }, [entity]);

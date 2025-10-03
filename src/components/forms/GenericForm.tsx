@@ -79,18 +79,22 @@ function GenericForm(formTemplate: FormValues) {
   const [query, setQuery] = useState<string>();
 
   useEffect(() => {
-    if (flag !== undefined) {
+    if (flag === true) {
       (async () => {
         switch (form.action) {
           case "POST":
             await fetchGenericPOST();
+            break;
           case "PUT":
             // await fetchGenericPUT();
             await fetchGenericPOST();
+            break;
           case "GET":
             await fetchGenericGET();
+            break;
           case "DELETE":
             await fetchGenericDELETE();
+            break;
         }
       })();
 
@@ -104,7 +108,7 @@ function GenericForm(formTemplate: FormValues) {
   const [flag, setFlag] = useState<boolean>();
 
   useEffect(() => {
-    if (flag !== undefined) {
+    if (flag === true) {
       if (form.action === "POST") {
         (async () => {
           const laQuery = await transformPOST(form);
@@ -157,7 +161,7 @@ function GenericForm(formTemplate: FormValues) {
     const datosValidados: DataValidation[] = await validaDatos(form);
     if (datosValidados[0].validation) {
       //Tengo que hacerlo así por el lío de los async/await que genera bcrypt al encriptar la contraseña
-      setFlag(!flag);
+      setFlag(true);
     } else {
       toast.error(datosValidados[0].message);
     }

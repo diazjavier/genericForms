@@ -14,7 +14,7 @@ export async function transformPUT(form: FormValues): Promise<string> {
   const camposAdicionales: Campos[] = [
     {
       nuevoCampo: "fechaUltimaModificacion",
-      nuevoDato: "'" + format(fechaHoy.toISOString(), "yyyy-MM-dd") + "'",
+      nuevoDato: "'" + format(fechaHoy, "yyyy-MM-dd'T'00:00:00XXX") + "'",
     },
     { nuevoCampo: "usuarioUltimaModificacion", nuevoDato: "1" },
   ];

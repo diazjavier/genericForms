@@ -8,8 +8,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { query, form } = body;
 
-    console.log("Query recibido en POST genérico:", query);
-
     // Guardo y genero el objeto a devolver
     await conn.query(query);
 
