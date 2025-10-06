@@ -14,10 +14,17 @@ import transformGET from "@/utils/transformers/transformGET";
 import transformDELETE from "@/utils/transformers/transformDELETE";
 import { validaDatos } from "@/utils/funciones/funcionesGenerales";
 import { toast } from "sonner";
+import { useRouter, useSearchParams } from "next/navigation";
 
 function GenericForm(formTemplate: FormValues) {
   // Referencia al formulario para limpiarlo con submit() despuésS
   const formRef = useRef<HTMLFormElement>(null);
+
+  const router = useRouter();
+
+  // Obtener parámetro "from" de la URL para redireccionar después de guardar
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from");
 
   //------------------------------------------------------
   //----------   Revisar esto!! --------------------------
@@ -98,10 +105,13 @@ function GenericForm(formTemplate: FormValues) {
         }
       })();
 
-      //Reseteo el formulario con setTimeout porque si no no se ve el toas.success
-      setTimeout(() => {
-        formRef.current?.submit();
-      }, 3000);
+      // //Reseteo el formulario con setTimeout porque si no no se ve el toas.success
+      // setTimeout(() => {
+      //   formRef.current?.submit();
+      // }, 3000);
+
+      //Vuelvo a la página de origen
+      router.push(from ?? "/");
     }
   }, [query]);
 

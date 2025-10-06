@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"; // shadcn input
 import { Button } from "@/components/ui/button"; // shadcn button
 import { Plus } from "lucide-react";
 import { FileSpreadsheet } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type DataTableProps<TData> = {
   columns: ColumnDef<TData, any>[];
@@ -30,6 +31,7 @@ type DataTableProps<TData> = {
   rowActions?: (row: TData) => React.ReactNode;
   onRowClick?: (row: TData) => void;
   className?: string;
+  entity?: string;
 };
 
 export default function GenericDataTable<TData>({
@@ -41,6 +43,7 @@ export default function GenericDataTable<TData>({
   rowActions,
   onRowClick,
   className,
+  entity,
 }: DataTableProps<TData>) {
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -48,6 +51,8 @@ export default function GenericDataTable<TData>({
     pageIndex: 0,
     pageSize,
   });
+
+  const router = useRouter();
 
   // si se envía rowActions, añadimos una columna de acciones al final
   const columnsWithActions = React.useMemo(() => {
@@ -134,7 +139,7 @@ export default function GenericDataTable<TData>({
             Exportar CSV
           </Button>
           <Button
-            onClick={() => alert("Se agregará un nuevo registro...")}
+            onClick={() => router.push(`/pages/new/${entity}`)}
             className="bg-sky-600 hover:bg-sky-700 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />

@@ -10,11 +10,13 @@ import {
 } from "@/interfaces/forms";
 import { messages } from "@/utils/messages";
 import { conn } from "@/utils/dbConnection";
-//import { isValidEmail } from "@/utils/funciones/funcionesGenerales";
 import { formUserRegiter } from "@/utils/forms/formUserRegister";
-import {formUserDataTable} from "@/utils/forms/formUserDataTable";
+import { formUserDataTable } from "@/utils/forms/formUserDataTable";
 import { formMediosDePagoRegiter } from "@/utils/forms/formMediosDePagoRegister";
 import { formTiposDeMovimientosStockRegister } from "@/utils/forms/formTiposDeMovimientosStockRegister";
+import { createDynamicSchema } from "@/schemas/genericSchemas";
+import { transformFieldsToSchemaDef } from "@/schemas/fieldTransform";
+import { z } from "zod";
 
 //Valida estructura de un dato tipo email
 export async function isValidEmail(email: string): Promise<boolean> {
@@ -38,31 +40,24 @@ export async function comillas(
   dataType: DataType,
   dato: string | undefined
 ): Promise<string> {
-  //   console.log("pass original: ", dato);
-  //   console.log("pass[0][0]: ", dato?.[0][0]);
 
   //Si no hay dato devuelvo NULL
   if (!dato || (dato.length === 1 && dato[0] === "") || dato === undefined) {
-    // console.log("dato NULL: ", "NULL");
     return "NULL";
   }
 
   //Si es numérico o booleano devuelvo el dato SIN comillas
   if (dataType in ["integer", "float", "boolean"]) {
-    // console.log("dato: ", dato);
     return dato;
   }
   //Si el tipo de campo es password lo encripto antes de guardarlo y le pongo las comillas
   if (fieldType === "password") {
-    // console.log("dato: ", dato);
     const hashedPass = await hashingPass(dato[0][0]);
-    // console.log("dato: ", "'" + hashedPass + "'");
     return "'" + hashedPass + "'";
   }
+
   //Si es ["varchar" , "date" , "datetime" , "text"] devuelvo el dato con comillas
-  //   console.log("dato sin comillas: ", dato);
   const datoConComillas: string = "'" + dato + "'";
-  //   console.log("dato con comillas: ", datoConComillas);
   return datoConComillas;
 }
 
@@ -141,39 +136,34 @@ export async function validaDatos(form: FormValues): Promise<DataValidation[]> {
 }
 
 //Para el alta de nuevos registros
-export async function buscaForm(entity: string, action: string): Promise<FormValues | null> {
-  //   let initialForm: FormValues | null = null;
+export async function buscaForm(
+  entity: string,
+  action: string
+): Promise<FormValues | null> {
 
-
-  if(entity === "Usuarios" && ( action === "POST" || action === "PUT")){
-      return formUserRegiter;
+  if (entity === "Usuarios" && (action === "POST" || action === "PUT")) {
+    return formUserRegiter;
   }
 
-  if(entity === "Usuarios" && action === "GET"){
-      return formUserDataTable;
+  if (entity === "Usuarios" && action === "GET") {
+    return formUserDataTable;
   }
 
-  if(entity === "MediosDePago" && ( action === "POST" || action === "PUT" || action === "GET")){
-      return formUserDataTable;
+  if (
+    entity === "MediosDePago" &&
+    (action === "POST" || action === "PUT" || action === "GET")
+  ) {
+    return formMediosDePagoRegiter;
   }
 
-  if(entity === "TiposDeMovimientosStock" && ( action === "POST" || action === "PUT" || action === "GET")){
-      return formUserDataTable;
+  if (
+    entity === "TiposDeMovimientosStock" &&
+    (action === "POST" || action === "PUT" || action === "GET")
+  ) {
+    return formTiposDeMovimientosStockRegister;
   }
 
   return null;
-
-//   switch (entity) {
-//     case "Usuarios":
-//       return formUserRegiter;
-//     case "MediosDePago":
-//       return formMediosDePagoRegiter;
-//     case "TiposDeMovimientosStock":
-//       return formTiposDeMovimientosStockRegister;
-//     default:
-//       return null;
-//   }
-
 }
 
 //Para la midificación de registros existentes
@@ -181,6 +171,7 @@ export async function buscaEditForm(
   entity: string,
   id: string
 ): Promise<FormValues | null> {
+
   //Traigo el modelo de form
   const formModel = await buscaForm(entity, "PUT");
 
@@ -223,6 +214,7 @@ export async function buscaEditForm(
     );
     return null;
   }
+  
   //Armo una nueva estructura de tipo FormValues con los datos que trajo de la tabla
   //Hay que sacar el campo password para que no se vea en el formulario
   const newFormValues: FormValues = {
@@ -243,10 +235,10 @@ export async function buscaEditForm(
 
 //Para la midificación de registros existentes
 export async function buscaEntityData(
-  entity: string,
   formModel: FormValues
-): Promise<FormValues | null> {
-  //Traigo el modelo de form
+): Promise<any[] | null> {
+
+  const entity = formModel.table;
 
   if (!formModel) {
     console.error(`No se encontró un formulario para la entidad: ${entity}`);
@@ -265,7 +257,7 @@ export async function buscaEntityData(
       .map((field) => `"${field.campoTabla}"`),
   ];
 
-  const query: string = `Select ${arrCampos} from "${entity}"`;
+  const query: string = `Select id, ${arrCampos} from "${entity}";`;
 
   //Mando un POST en lugar de un GET porque con un GET no puedo mandar un body
   const request = new Request(
@@ -279,30 +271,38 @@ export async function buscaEntityData(
 
   const res = await fetch(request);
   const jsonRes = await res.json();
-  
-  //Resolver mejor el caso en el queno se encuentran datos
+
+  //Resolver mejor el caso en el que no se encuentran datos
   if (!jsonRes || jsonRes.length === 0) {
-    console.error(
-      `No se encontraron datos para la entidad: ${entity}`
-    );
+    console.error(`No se encontraron datos para la entidad: ${entity}`);
     return null;
   }
-  //Armo una nueva estructura de tipo FormValues con los datos que trajo de la tabla
-  //Hay que sacar el campo password para que no se vea en el formulario
-  const newFormValues: FormValues = {
-    ...formModel,
-    action: "GET",
-    formName: `datosDe${formModel.table}`,
-    formTitle: `${formModel.formTitle}`,
-    fields: formModel.fields.map((field) =>
-      field.campoTabla && arrCampos.includes(`"${field.campoTabla}"`)
-        ? { ...field, value: [jsonRes[0][field.campoTabla]] }
-        : field
-    ),
-  };
 
-  console.log(newFormValues.fields)
-
-  return newFormValues;
+  return jsonRes;
 }
 
+/********FUNCIONES PARA DATATABLES*************** */
+
+export async function traeColumnDefs(form: FormValues): Promise<any[]> {
+  if (!form || !form.fields) return [];
+  const columnDefs: any[] = form.fields
+    .filter((field) => field.campoTabla)
+    .map((field) => ({
+      accessorKey: field.campoTabla,
+      header: field.label,
+    }));
+  return columnDefs;
+}
+
+export async function traeDatosDataTable(form: FormValues): Promise<any[]> {
+  const defs = transformFieldsToSchemaDef(form.fields);
+  const GenericSchema = createDynamicSchema(defs);
+  const GenericArraySchema = z.array(GenericSchema);
+
+  const fetchedData: any = await buscaEntityData(form);
+  // Valido que los datos traídos coincidan con el esquema dinámico
+  const parsedData = GenericArraySchema.parse(fetchedData);
+  return parsedData;
+}
+
+/************************************************ */
