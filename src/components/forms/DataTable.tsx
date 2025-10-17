@@ -13,10 +13,11 @@ import {
 
 import { Input } from "@/components/ui/input"; // shadcn input
 import { Button } from "@/components/ui/button"; // shadcn button
+import { DropdownMenu } from "radix-ui"; // shadcn dropdown
 import { Plus, FileSpreadsheet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { FilterFn } from "@tanstack/react-table";
 
 type DataTableProps<TData> = {
   columns: ColumnDef<TData, any>[];
@@ -53,9 +54,14 @@ export default function DataTable<TData>({
   });
 
   const router = useRouter();
-  //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
-  const [open, setOpen] = useState<boolean>(false);
-  const [flag, setFlag] = useState<boolean>();
+  // //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
+  // const [open, setOpen] = useState<boolean>(false);
+  // const [flag, setFlag] = useState<boolean>();
+
+  //Declaro un estado para el filtro de estado (all, active, inactive)
+  const [statusFilter, setStatusFilter] = React.useState<
+    "all" | "active" | "inactive"
+  >("all");
 
   // --- MEMOIZAR data y columns con fallback para evitar undefined ---
   const dataMemo = React.useMemo(() => data ?? [], [data]);
@@ -63,6 +69,16 @@ export default function DataTable<TData>({
     () => columns ?? ([] as ColumnDef<TData, any>[]),
     [columns]
   );
+
+  //Filtro los datos por estado ANTES de dárselos a la tabla
+  const filteredByStatus = React.useMemo(() => {
+    if (statusFilter === "all") return dataMemo;
+    if (statusFilter === "active")
+      return dataMemo.filter((r) => (r as any).fechaFin === null);
+    if (statusFilter === "inactive")
+      return dataMemo.filter((r) => (r as any).fechaFin !== null);
+    return dataMemo;
+  }, [dataMemo, statusFilter]);
 
   // si se envía rowActions, añadimos una columna de acciones al final
   const columnsWithActions = React.useMemo(() => {
@@ -77,10 +93,41 @@ export default function DataTable<TData>({
     return [...baseColumns, actionCol];
   }, [baseColumns, rowActions]);
 
+  //Armo un filtro global que busque en todas las columnas
+  const globalFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+    const search = filterValue.toLowerCase();
+    // Une todos los valores del row en un solo string
+    const rowString = Object.values(row.original).join(" ").toLowerCase();
+    return rowString.includes(search);
+  };
+
+  const activeFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+    //Primero saco en que posición está el campo fechaFin
+    const indexOfFechaFin = Object.keys(row.original).findIndex(
+      (data) => data === "fechaFin"
+    );
+
+    //Muestro sólo las filas que tienen fechaFin en null (o sea las activas)
+    const activesRows = Object.values(row.original)[indexOfFechaFin];
+    return activesRows === null;
+  };
+
+  const inactiveFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
+    //Primero saco en que posición está el campo fechaFin
+    const indexOfFechaFin = Object.keys(row.original).findIndex(
+      (data) => data === "fechaFin"
+    );
+
+    //Muestro sólo las filas que tienen fechaFin not null (o sea las inactivas)
+    const inactivesRows = Object.values(row.original)[indexOfFechaFin];
+    return inactivesRows !== null;
+  };
+
   const table = useReactTable({
-    data: dataMemo,
+    data: filteredByStatus,
     columns: columnsWithActions,
     state: { globalFilter, sorting, pagination },
+    globalFilterFn,
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
@@ -137,6 +184,59 @@ export default function DataTable<TData>({
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="min-w-[180px]"
           />
+        </div>
+        <div className="flex flex-row gap-4 items-center">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="px-3 py-2 border rounded"
+              >
+                Opciones de visualización
+              </Button>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Content className="p-2 bg-white shadow rounded">
+              <DropdownMenu.Item
+                onClick={() => setStatusFilter("all")}
+                role="menuitem"
+                className="px-2 py-1 hover:bg-gray-100 rounded"
+              >
+                Todos
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Item
+                onClick={() => setStatusFilter("active")}
+                role="menuitem"
+                className="px-2 py-1 hover:bg-gray-100 rounded"
+              >
+                Activos
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Item
+                onClick={() => setStatusFilter("inactive")}
+                role="menuitem"
+                className="px-2 py-1 hover:bg-gray-100 rounded"
+              >
+                Inactivos
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+
+          <span size= "sm" className="text-sm font-bold rounded-md bg-gray-50 border-blue-900-2 p-2 text-gray-600">
+            {statusFilter === "all"
+              ? "TODOS"
+              : statusFilter === "active"
+              ? "ACTIVOS"
+              : "INACTIVOS"}
+          </span>
+        </div>
+
+        <div>
+          <span className="text-sm text-gray-600">
+            {table.getFilteredRowModel().rows.length} registros
+          </span>
         </div>
 
         <div className="flex items-center gap-2">

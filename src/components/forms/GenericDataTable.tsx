@@ -143,10 +143,6 @@ function GenericDataTable({ entity }: GDTProps) {
     return response;
   };
 
-  const impactaDatos = async () => {
-    setFlag(true);
-  };
-
   const impactaDelete = async () => {
     if (!form) return;
     const laQuery = transformDELETE(form.table ?? "", rowId?.toString() ?? "");
@@ -209,13 +205,11 @@ function GenericDataTable({ entity }: GDTProps) {
         onSave={impactaDelete}
         open={openDelete}
         setOpen={setOpenDelete}
-        //id={rowId ?? undefined}
       />
       <RestoreConfirm
         onSave={impactaRestore}
         open={openRestore}
         setOpen={setOpenRestore}
-        //id={rowId ?? undefined}
       />
     </>
   );

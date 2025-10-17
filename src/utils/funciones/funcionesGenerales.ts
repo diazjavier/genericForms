@@ -289,6 +289,7 @@ export async function traeColumnDefs(form: FormValues): Promise<any[]> {
     .map((field) => ({
       accessorKey: field.campoTabla,
       header: field.label,
+      enableGlobalFilter: true,
     }));
   return columnDefs;
 }
