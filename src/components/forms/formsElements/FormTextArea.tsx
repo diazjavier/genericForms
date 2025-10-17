@@ -12,7 +12,6 @@ function FormTextArea({ field, dataChange }: FormInputProps) {
     const fakeEvent = {
       target: { type: "input", name: field.name, value: laData },
     };
-    //dataChange(fakeEvent as any, arrValue);
     dataChange(fakeEvent as any);
   };
 
@@ -25,7 +24,6 @@ function FormTextArea({ field, dataChange }: FormInputProps) {
         resize="vertical"
         required={field.required}
         placeholder={field.placeholder}
-        //defaultValue={field.defaultValue?.[0] ?? ""}
         value={field.value?.[0] ?? ""}
         autoFocus={field.autofocus}
         onChange={handleTextAreaChange}

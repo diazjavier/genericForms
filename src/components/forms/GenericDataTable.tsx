@@ -1,289 +1,223 @@
 "use client";
-// components/data-table/DataTable.tsx
 import React from "react";
+import { ColumnDef } from "@tanstack/react-table";
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  SortingState,
-} from "@tanstack/react-table";
+  buscaForm,
+  buscaEntityData,
+  traeColumnDefs,
+} from "@/utils/funciones/funcionesGenerales";
 
-import { Input } from "@/components/ui/input"; // shadcn input
 import { Button } from "@/components/ui/button"; // shadcn button
-import { Plus } from "lucide-react";
-import { FileSpreadsheet } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import DeleteConfirm from "@/components/forms/formsElements/DeleteConfirm";
+import RestoreConfirm from "@/components/forms/formsElements/RestoreConfirm";
+import { toast } from "sonner";
+import DataTable from "@/components/forms/DataTable";
+import { Pencil, Trash2, RotateCcw } from "lucide-react";
+import { FormValues } from "@/interfaces/forms";
+import transformDELETE from "@/utils/transformers/transformDELETE";
+import transformGET from "@/utils/transformers/transformGET";
+import transformPUT from "@/utils/transformers/transformPUT";
+import transformRESTORE from "@/utils/transformers/transformRESTORE";
 
-type DataTableProps<TData> = {
-  columns: ColumnDef<TData, any>[];
-  data: TData[];
-  pageSize?: number;
-  enableSorting?: boolean;
-  enablePagination?: boolean;
-  /**
-   * rowActions recibirá la fila original y debe devolver ReactNode con botones (editar, borrar, ...)
-   * Ej: row => <Button onClick={() => edit(row)}>Editar</Button>
-   */
-  rowActions?: (row: TData) => React.ReactNode;
-  onRowClick?: (row: TData) => void;
-  className?: string;
-  entity?: string;
+type GDTProps = {
+  entity: string;
 };
 
-export default function GenericDataTable<TData>({
-  columns,
-  data,
-  pageSize = 10,
-  enableSorting = true,
-  enablePagination = true,
-  rowActions,
-  onRowClick,
-  className,
-  entity,
-}: DataTableProps<TData>) {
-  const [globalFilter, setGlobalFilter] = React.useState("");
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize,
-  });
-
+function GenericDataTable({ entity }: GDTProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
+  const [openDelete, setOpenDelete] = useState<boolean>(false);
+  const [openRestore, setOpenRestore] = useState<boolean>(false);
+  const [flag, setFlag] = useState<boolean>();
+  const [form, setForm] = useState<FormValues | null>(null);
+  const [columnDefs, setColumnDefs] = useState<ColumnDef<any>[]>([]);
+  const [data, setData] = useState<any[]>([]);
+  //Creamos un estado para armar la Query
+  const [query, setQuery] = useState<string>();
+  const [rowId, setRowId] = useState<number | undefined>();
+  const [refreshFlag, setRefreshFlag] = useState<boolean>(false);
 
-  // si se envía rowActions, añadimos una columna de acciones al final
-  const columnsWithActions = React.useMemo(() => {
-    if (!rowActions) return columns;
-    const actionCol: ColumnDef<TData, any> = {
-      id: "actions",
-      header: "",
-      cell: ({ row }) => rowActions(row.original),
-      enableSorting: false,
-      size: 1,
+  // Efecto 1: cargar form/columns/data cuando cambie entity
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const formData = await buscaForm(entity, "GET");
+        if (!mounted) return;
+        if (!formData) {
+          setForm(null);
+          setColumnDefs([]);
+          setData([]);
+          return;
+        }
+        setForm(formData);
+
+        const cols = await traeColumnDefs(formData);
+        if (!mounted) return;
+        setColumnDefs(cols ?? []);
+
+        const dataFetched = await buscaEntityData(formData);
+        if (!mounted) return;
+        setData(dataFetched ?? []);
+      } catch (err) {
+        console.error("Error cargando GenericDataTable:", err);
+        if (!mounted) return;
+        setForm(null);
+        setColumnDefs([]);
+        setData([]);
+      }
+    })();
+    return () => {
+      mounted = false;
     };
-    return [...columns, actionCol];
-  }, [columns, rowActions]);
+  }, [entity, refreshFlag]);
 
-  const table = useReactTable({
-    data,
-    columns: columnsWithActions,
-    state: { globalFilter, sorting, pagination },
-    onGlobalFilterChange: setGlobalFilter,
-    onSortingChange: setSorting,
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    enableSorting,
-  });
+  // Efecto 2: reaccionar a flag (siempre declarado; su cuerpo valida form)
+  useEffect(() => {
+    // IMPORTANTE: el hook existe siempre; aquí evitamos ejecutar la lógica si form no está listo
+    if (!form) return;
+    if (flag === true) {
+      (async () => {
+        try {
+          if (form.action === "PUT") {
+            const laQuery = await transformPUT(form);
+            setQuery(laQuery);
+          }
+          if (form.action === "GET") {
+            const laQuery = await transformGET(form);
+            setQuery(laQuery);
+          }
+          // Si añadís POST o DELETE, manejalos aquí también
+        } catch (err) {
+          console.error("Error en efecto flag:", err);
+        } finally {
+          // reseteá flag si querés que la acción sea una sola vez
+          setFlag(false);
+        }
+      })();
+    }
+  }, [flag, form]);
 
-  // Export CSV de las filas actualmente visibles (filtradas + ordenadas)
-  const exportCSV = () => {
-    const rows = table.getRowModel().rows;
-    if (!rows.length) return;
-    const headers = table
-      .getAllLeafColumns()
-      .map((c) =>
-        typeof c.columnDef.header === "string" ? c.columnDef.header : c.id
-      );
-    const csv = [
-      headers.join(","),
-      ...rows.map((r) =>
-        table
-          .getAllLeafColumns()
-          .map((c) => {
-            const v = r.getValue(c.id as any);
-            // escapado básico
-            return typeof v === "string"
-              ? `"${v.replace(/"/g, '""')}"`
-              : v ?? "";
-          })
-          .join(",")
-      ),
-    ].join("\n");
+  useEffect(() => {
+    if (!query) return;
 
-    const bom = "\uFEFF";
-    const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `export.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    let mounted = true;
+
+    //Tengo que hacerlo así porque no puedo llamar a una función async directamente desde useEffect
+    const fetchData = async () => {
+      try {
+        if (mounted) {
+          await fetchGenericPOST();
+        }
+      } catch (error) {
+        console.error("Error en fetchGenericPOST:", error);
+      }
+    };
+    fetchData();
+    setRefreshFlag(!refreshFlag);
+    //Esto es por si el componente se desmonta antes de que termine la llamada fetch
+    return () => {
+      mounted = false;
+    };
+  }, [query]);
+
+  const fetchGenericPOST = async () => {
+    const apiUrl: string = `http://${process.env.NEXT_PUBLIC_HOST}:${process.env.NEXT_PUBLIC_PORT}/api/generic/post`;
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query, form }),
+    });
+
+    if (!res.ok) {
+      toast.error(`Error en la API: ${res.status} - ${await res.text()}`);
+      throw new Error(`Error en la API: ${res.status} - ${await res.text()}`);
+    }
+
+    toast.success("Los datos se guardaron con éxito");
+
+    const response = await res.json();
+    return response;
+  };
+
+  const impactaDatos = async () => {
+    setFlag(true);
+  };
+
+  const impactaDelete = async () => {
+    if (!form) return;
+    const laQuery = transformDELETE(form.table ?? "", rowId?.toString() ?? "");
+    setQuery(laQuery);
+  };
+
+  const impactaRestore = async () => {
+    if (!form) return;
+    const laQuery = transformRESTORE(form.table ?? "", rowId?.toString() ?? "");
+    setQuery(laQuery);
   };
 
   return (
-    <div className={className}>
-      {/* Controls (search + export) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Buscar..."
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="min-w-[180px]"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={exportCSV}
-            variant="outline" // mismo estilo de borde
-            className="flex items-center gap-2"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-green-600" />
-            Exportar CSV
-          </Button>
-          <Button
-            onClick={() => router.push(`/pages/new/${entity}`)}
-            className="bg-sky-600 hover:bg-sky-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Crear nuevo
-          </Button>
-        </div>
-      </div>
-
-      {/* Tabla */}
-      <div className="overflow-x-auto rounded border">
-        <table className="min-w-full divide-y">
-          <thead className="bg-gray-50">
-            {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id}>
-                {hg.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    className="px-4 py-2 text-left text-sm font-semibold"
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div className="flex items-center gap-2 select-none">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {header.column.getCanSort() ? (
-                          <button
-                            onClick={header.column.getToggleSortingHandler()}
-                            className="text-xs opacity-60"
-                            aria-label="toggle sort"
-                          >
-                            {header.column.getIsSorted() === "asc"
-                              ? " 🔼"
-                              : header.column.getIsSorted() === "desc"
-                              ? " 🔽"
-                              : " ↕"}
-                          </button>
-                        ) : null}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-
-          <tbody className="bg-white divide-y">
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="hover:bg-gray-50 cursor-default"
-                  onClick={() => onRowClick?.(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-2 text-sm">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))
+    <>
+      <DataTable
+        columns={columnDefs ?? []}
+        data={data ?? []}
+        pageSize={20}
+        rowActions={(row) => (
+          <div className="flex gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-sky-600 hover:text-sky-800"
+              onClick={() =>
+                router.push(
+                  `/pages/update/${entity}/${row.id}?from=${encodeURIComponent(
+                    pathname
+                  )}`
+                )
+              }
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+            {row.fechaFin ? (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-sky-600 hover:text-sky-800"
+                onClick={() => setOpenRestore(true)} // Abre el diálogo de confirmación
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
             ) : (
-              <tr>
-                <td
-                  colSpan={table.getAllLeafColumns().length}
-                  className="p-4 text-sm text-gray-500"
-                >
-                  No hay datos
-                </td>
-              </tr>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-sky-600 hover:text-sky-800"
+                onClick={() => setOpenDelete(true)} // Abre el diálogo de confirmación
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Paginación */}
-      {enablePagination && (
-        <div className="flex items-center justify-between gap-2 pt-4">
-          <div className="text-sm text-gray-600">
-            Mostrando{" "}
-            <strong>
-              {table.getState().pagination.pageIndex *
-                table.getState().pagination.pageSize +
-                1}
-            </strong>{" "}
-            -{" "}
-            <strong>
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
-                table.getFilteredRowModel().rows.length
-              )}
-            </strong>{" "}
-            de <strong>{table.getFilteredRowModel().rows.length}</strong>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-              variant="outline"
-            >
-              Primero
-            </Button>
-            <Button
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              variant="outline"
-            >
-              Anterior
-            </Button>
-            <Button
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              variant="outline"
-            >
-              Siguiente
-            </Button>
-            <Button
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-              variant="outline"
-            >
-              Último
-            </Button>
-
-            <select
-              className="ml-2 rounded border px-2 py-1"
-              value={table.getState().pagination.pageSize}
-              onChange={(e) => table.setPageSize(Number(e.target.value))}
-            >
-              {[5, 10, 20, 50].map((s) => (
-                <option key={s} value={s}>
-                  {s} / pág
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+        onRowClick={(row) => setRowId(row.id)}
+        entity={entity}
+      />
+      <DeleteConfirm
+        onSave={impactaDelete}
+        open={openDelete}
+        setOpen={setOpenDelete}
+        //id={rowId ?? undefined}
+      />
+      <RestoreConfirm
+        onSave={impactaRestore}
+        open={openRestore}
+        setOpen={setOpenRestore}
+        //id={rowId ?? undefined}
+      />
+    </>
   );
 }
+export default GenericDataTable;

@@ -9,7 +9,6 @@ function FormRadioGroup({ field, dataChange }: FormInputProps) {
     const fakeEvent = {
       target: { type: "radio", name: field.name, value: laData },
     };
-    //dataChange(fakeEvent as any, arrValue);
     dataChange(fakeEvent as any);
   };
 
@@ -18,7 +17,6 @@ function FormRadioGroup({ field, dataChange }: FormInputProps) {
       <label htmlFor={field.name}>{field.label}</label>
       <RadioGroup.Root
         orientation="vertical"
-        //defaultValue={field.defaultValue?.[0] ?? ""}
         value={field.value?.[0] ?? ""}
         name={field.name}
         className="border border-gray-300 p-4 rounded"

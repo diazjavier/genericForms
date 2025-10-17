@@ -32,6 +32,18 @@ export const formUserDataTable: FormValues = {
       dataType: "varchar",
       campoTabla: "email",
     },
+    {
+      fieldType: "datepicker",
+      label: "Estado",
+      name: "fbaja",
+      type: "text",
+      subType: "date",
+      placeholder: "Fcha de baja...",
+      autofocus: false,
+      required: false,
+      dataType: "date",
+      campoTabla: "fechaFin",
+    },
   ],
   buttons: [
     {

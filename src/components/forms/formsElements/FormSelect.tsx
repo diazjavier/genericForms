@@ -10,7 +10,6 @@ function FormSelect({ field, dataChange }: FormInputProps) {
     const fakeEvent = {
       target: { type: "select", name: field.name, value: laData },
     };
-    //dataChange(fakeEvent as any, arrValue);
     dataChange(fakeEvent as any);
   };
 
@@ -20,7 +19,6 @@ function FormSelect({ field, dataChange }: FormInputProps) {
       <Select.Root
         name={field.name}
         required={field.required}
-        //defaultValue={field.defaultValue?.[0] ?? ""}
         value={field.value?.[0] ?? ""}
         onValueChange={handleSelectChange}
       >

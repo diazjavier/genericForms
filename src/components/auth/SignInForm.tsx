@@ -19,8 +19,8 @@ function SignInForm() {
   const { control, handleSubmit } = useForm();
 
   const onSubmit = handleSubmit((data) => {
-    console.log("La data es: ", data);
-    console.log("La el tipo de dato de data es: ", typeof(data));
+    // console.log("La data es: ", data);
+    // console.log("La el tipo de dato de data es: ", typeof(data));
   });
 
   return (

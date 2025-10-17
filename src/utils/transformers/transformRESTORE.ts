@@ -8,15 +8,14 @@ interface Campos {
   nuevoDato: string;
 }
 
-// export function transformDELETE(form: FormValues): string {
-export function transformDELETE(table: string, id: string): string {
+export function transformRESTORE(table: string, id: string): string {
   const fechaHoy = new Date();
 
   //Defino los campos adicionales
   const camposAdicionales: Campos[] = [
     {
       nuevoCampo: "fechaFin",
-      nuevoDato: "'" + format(fechaHoy, "yyyy-MM-dd'T'00:00:00XXX") + "'",
+      nuevoDato: "NULL",
     },
     {
       nuevoCampo: "fechaUltimaModificacion",
@@ -58,4 +57,4 @@ export function transformDELETE(table: string, id: string): string {
   //return "";
 }
 
-export default transformDELETE;
+export default transformRESTORE;

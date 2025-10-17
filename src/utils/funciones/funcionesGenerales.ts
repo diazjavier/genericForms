@@ -26,7 +26,6 @@ export async function isValidEmail(email: string): Promise<boolean> {
 
 //Hashea una password
 export async function hashingPass(pass: string | undefined): Promise<string> {
-  console.log("pass: ", pass);
   if (!pass) {
     return await bcrypt.hash("", 10);
   } else {

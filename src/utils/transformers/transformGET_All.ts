@@ -43,7 +43,7 @@ export function transformGET(form: FormValues): string {
   const tabla: string = form.table ?? "";
   // const id: string = form.id?.toString() ?? "";
   //  const query: string = `Select ${campos} from ${tabla} where id = ${id}`;
-  const query: string = `Select ${campos} from ${tabla}`;
+  const query: string = `Select ${campos} from ${tabla} order by 1`;
 
   return query;
   //return "";

@@ -10,7 +10,6 @@ import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect, useRef } from "react";
 import transformPOST from "@/utils/transformers/transformPOST";
 import transformPUT from "@/utils/transformers/transformPUT";
-import transformGET from "@/utils/transformers/transformGET";
 import transformDELETE from "@/utils/transformers/transformDELETE";
 import { validaDatos } from "@/utils/funciones/funcionesGenerales";
 import { toast } from "sonner";
@@ -50,6 +49,7 @@ function GenericForm(formTemplate: FormValues) {
   const [form, setForm] = useState<FormValues>(formTemplate);
 
   // Función async para guardar los datos:
+  //Uso la misma función para POST y PUT porque me permite enviar una query tanto para un insert como para un update en el mismo body
   const fetchGenericPOST = async () => {
     const apiUrl: string = `http://${process.env.NEXT_PUBLIC_HOST}:${process.env.NEXT_PUBLIC_PORT}/api/generic/post`;
     const res = await fetch(apiUrl, {
@@ -69,16 +69,6 @@ function GenericForm(formTemplate: FormValues) {
     return response;
   };
 
-  const fetchGenericPUT = async () => {
-    return "";
-  };
-  const fetchGenericGET = async () => {
-    return "";
-  };
-  const fetchGenericDELETE = async () => {
-    return "";
-  };
-
   //Creamos un estado para abrir la pantalla emergente de confirmación de guardado
   const [open, setOpen] = useState<boolean>(false);
 
@@ -93,22 +83,10 @@ function GenericForm(formTemplate: FormValues) {
             await fetchGenericPOST();
             break;
           case "PUT":
-            // await fetchGenericPUT();
             await fetchGenericPOST();
-            break;
-          case "GET":
-            await fetchGenericGET();
-            break;
-          case "DELETE":
-            await fetchGenericDELETE();
             break;
         }
       })();
-
-      // //Reseteo el formulario con setTimeout porque si no no se ve el toas.success
-      // setTimeout(() => {
-      //   formRef.current?.submit();
-      // }, 3000);
 
       //Vuelvo a la página de origen
       router.push(from ?? "/");
@@ -131,15 +109,12 @@ function GenericForm(formTemplate: FormValues) {
           setQuery(laQuery);
         })();
       }
-      if (form.action === "GET") {
-        (async () => {
-          const laQuery = await transformGET(form);
-          setQuery(laQuery);
-        })();
-      }
       if (form.action === "DELETE") {
         (async () => {
-          const laQuery = await transformDELETE(form);
+          const laQuery = await transformDELETE(
+            form.table ?? "",
+            form.id?.toString() ?? ""
+          );
           setQuery(laQuery);
         })();
       }
@@ -152,11 +127,15 @@ function GenericForm(formTemplate: FormValues) {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
+    // Si es un checkbox, el value es un array de strings, si no lo transformo en un array con un solo string
+    const checkValues: string[] = Array.isArray(e.target.value)
+      ? e.target.value
+      : [e.target.value];
     setForm(
       (prev: FormValues): FormValues => ({
         ...prev,
         fields: prev.fields.map((d) =>
-          d.name === e.target.name ? { ...d, value: [e.target.value] } : d
+          d.name === e.target.name ? { ...d, value: checkValues } : d
         ),
       })
     );
@@ -187,8 +166,7 @@ function GenericForm(formTemplate: FormValues) {
           </Heading>
 
           {/* Formulario */}
-          {/*<form onSubmit={onSubmit2}>*/}
-          <form ref={formRef} onSubmit={onSubmit2}>
+          <form ref={formRef} onSubmit={onSubmit2} onReset={() => reset()}>
             <Flex direction="column" gap="2" className="p-4">
               {/* Campos del formulario: 
                 Cada campo recibe: 

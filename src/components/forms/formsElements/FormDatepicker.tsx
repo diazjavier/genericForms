@@ -11,10 +11,6 @@ import { FormInputProps } from "@/interfaces/forms";
 import { useState } from "react";
 
 function FormDatePicker({ field, dataChange }: FormInputProps) {
-  //Si hay una fecha por default la muestro, si no muestro la fecha de actual
-  // const fechaAMostrar: Date = field.defaultValue
-  //   ? new Date(field.defaultValue[0])
-  //   : new Date();
   const fechaAMostrar: Date = field.value
     ? new Date(field.value[0])
     : new Date();
@@ -33,7 +29,6 @@ function FormDatePicker({ field, dataChange }: FormInputProps) {
     const fakeEvent = {
       target: { type: "select", name: field.name, value: laData },
     };
-    //dataChange(fakeEvent as any, arrValue);
     dataChange(fakeEvent as any);
   };
 

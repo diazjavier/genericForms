@@ -7,7 +7,6 @@ import {
 import { FormInputProps } from "@/interfaces/forms";
 
 function FormInput({ field, dataChange }: FormInputProps) {
-
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -18,7 +17,6 @@ function FormInput({ field, dataChange }: FormInputProps) {
     const fakeEvent = {
       target: { type: "input", name: field.name, value: laData },
     };
-    //dataChange(fakeEvent as any, arrValue);
     dataChange(fakeEvent as any);
   };
 
@@ -31,7 +29,6 @@ function FormInput({ field, dataChange }: FormInputProps) {
         type={field.type ? field.type : "text"}
         required={field.required}
         placeholder={field.placeholder}
-        //defaultValue={field.defaultValue?.[0] ?? ""}
         value={field.value?.[0] ?? ""}
         autoFocus={field.autofocus}
         onChange={handleInputChange}
